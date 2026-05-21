@@ -3,7 +3,7 @@ import { Q as createComponent, $ as renderComponent, a6 as renderTemplate, Z as 
 import 'kleur/colors';
 import { jsxs, jsx } from 'react/jsx-runtime';
 import { useState } from 'react';
-import { $ as $$Layout } from '../chunks/Layout_C7GbpmgE.mjs';
+import { $ as $$Layout } from '../chunks/Layout_DL_lBRAM.mjs';
 export { renderers } from '../renderers.mjs';
 
 const CheckoutForm = () => {

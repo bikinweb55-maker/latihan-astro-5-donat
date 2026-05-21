@@ -3,7 +3,7 @@ import { O as createAstro, Q as createComponent, $ as renderComponent, a6 as ren
 import 'kleur/colors';
 import { a as apiClient } from '../../chunks/shared_vBvdt9Eh.mjs';
 import { jsx, jsxs } from 'react/jsx-runtime';
-import { $ as $$Layout } from '../../chunks/Layout_C7GbpmgE.mjs';
+import { $ as $$Layout } from '../../chunks/Layout_DL_lBRAM.mjs';
 export { renderers } from '../../renderers.mjs';
 
 async function getOrderById(id) {

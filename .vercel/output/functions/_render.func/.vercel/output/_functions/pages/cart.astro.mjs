@@ -2,7 +2,7 @@
 import { Q as createComponent, $ as renderComponent, a6 as renderTemplate, Z as maybeRenderHead } from '../chunks/astro/server_B-Hurx3O.mjs';
 import 'kleur/colors';
 import { jsxs, jsx } from 'react/jsx-runtime';
-import { $ as $$Layout } from '../chunks/Layout_C7GbpmgE.mjs';
+import { $ as $$Layout } from '../chunks/Layout_DL_lBRAM.mjs';
 export { renderers } from '../renderers.mjs';
 
 const LocalCart = () => {

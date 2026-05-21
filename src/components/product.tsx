@@ -1,87 +1,186 @@
-import { useState, useEffect } from "react";
-import { ContentTransformer, Image } from "@crystallize/reactjs-components";
-import { ProductBody } from "./product-body";
-import { VariantSelector } from "./variant-selector";
-import { RelatedProducts } from "./related-products";
-import {
-    getCurrencySymbol,
-    getDefaultPriceVariant,
-    variantToCartItem,
-} from "../use-cases/utils";
-import type { Product as ProductType } from "../use-cases/contracts/Product";
+import { useEffect, useState } from "react";
 
-export const Product = ({ product }: { product: ProductType }) => {
-    const [selectedVariant, setSelectedVariant] = useState(
-        product?.variants?.[0]
-    );
-    const onVariantChange = (variant: any) => setSelectedVariant(variant);
-    const defaultPrice = getDefaultPriceVariant(selectedVariant?.priceVariants);
-    const [cart, setCart] = useState<any>([]);
-    const [buttonText, setButtonText] = useState("Add to Cart");
+function formatPrice(currency = "EUR", price = 0) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+  }).format(price);
+}
 
-    const addToCart = (product: any) => {
-        setButtonText("Adding...");
-        const newCart = [...cart, variantToCartItem(product)];
-        setCart(newCart);
-        setButtonText("Added 🎉");
-        setTimeout(() => setButtonText("Add to Cart"), 1000);
-    };
+function getDefaultPrice(priceVariants: any[] = []) {
+  return priceVariants.find((v) => v?.identifier === "default");
+}
 
-    useEffect(() => {
-        const cart = localStorage.getItem("cart");
-        if (cart) {
-            setCart(JSON.parse(cart));
-        }
-    }, []);
+function mapCartItem(product: any) {
+  const price = getDefaultPrice(product?.priceVariants ?? []);
 
-    useEffect(() => {
-        localStorage.setItem("cart", JSON.stringify(cart));
-    }, [cart]);
+  return {
+    sku: product?.sku,
+    name: product?.name,
+    quantity: 1,
+    price: price?.price ?? 0,
+    image: product?.images?.[0]?.url,
+    attributes: product?.attributes ?? [],
+  };
+}
 
-    return (
-        <>
-            <div className="flex lg:flex-row gap-2 w-full items-center flex-col">
-                <div className="flex flex-col text-text w-[400px]">
-                    <h1 className="font-extrabold text-5xl mb-3">
-                        {product.name}
-                    </h1>
-                    <ContentTransformer
-                        json={product?.summary?.content?.json as [any]}
-                    />
-                </div>
-                <Image
-                    {...product.defaultVariant?.firstImage}
-                    sizes="500px"
-                    className="rounded-sm mx-auto"
-                />
-                <div className="lg:mb-0 mb-5">
-                    <VariantSelector
-                        variants={product.variants!}
-                        selectedVariant={selectedVariant!}
-                        onVariantChange={onVariantChange}
-                    />
-                </div>
-            </div>
-            <div className="flex z-10 justify-between lg:w-5/12 w-8/12 mx-auto bg-white p-5 text-text rounded-xl">
-                <div>
-                    <p className="font-semibold text-sm">Total price</p>
-                    <p className="font-bold text-lg">
-                        {getCurrencySymbol(
-                            defaultPrice?.currency ?? "EUR",
-                            defaultPrice?.price ?? 0.0
-                        )}
-                    </p>
-                </div>
+/*
+FIX UTAMA
+menghindari:
+Cannot read properties of null (reading 'forEach')
+*/
+function reduceAttributes(variants: any[] = []) {
+  return variants.reduce((acc, variant) => {
+    const attrs = variant?.attributes ?? [];
+
+    attrs.forEach((item: any) => {
+      if (!item) return;
+
+      const key = item.attribute;
+      const value = item.value;
+
+      if (!key) return;
+
+      if (!acc[key]) {
+        acc[key] = [value];
+      } else if (!acc[key].includes(value)) {
+        acc[key].push(value);
+      }
+    });
+
+    return acc;
+  }, {} as Record<string, string[]>);
+}
+
+function getSelectedAttributes(variant: any) {
+  const attrs = variant?.attributes ?? [];
+
+  return Object.assign(
+    {},
+    ...attrs.map((x: any) => ({
+      [x.attribute]: x.value,
+    }))
+  );
+}
+
+function VariantSelector({
+  variants = [],
+  selectedVariant,
+  onVariantChange,
+}: any) {
+  const attributes = reduceAttributes(variants);
+
+  function change(attribute: string, value: string) {
+    const current = getSelectedAttributes(selectedVariant);
+
+    current[attribute] = value;
+
+    const found = variants.find((v: any) => {
+      const vAttrs = getSelectedAttributes(v);
+
+      return JSON.stringify(vAttrs) === JSON.stringify(current);
+    });
+
+    if (found) {
+      onVariantChange(found);
+    }
+  }
+
+  return (
+    <div>
+      {Object.keys(attributes).map((key) => {
+        const values = attributes[key];
+
+        return (
+          <div key={key} className="mb-4">
+            <p className="font-semibold mb-2">{key}</p>
+
+            <div className="flex gap-2 flex-wrap">
+              {values.map((value) => (
                 <button
-                    className="bg-background2 px-4 rounded-xl"
-                    onClick={() => addToCart(selectedVariant)}
+                  key={value}
+                  type="button"
+                  className="px-3 py-2 border rounded"
+                  onClick={() => change(key, value)}
                 >
-                    {buttonText}
+                  {value}
                 </button>
+              ))}
             </div>
-            <ProductBody body={product.body} table={product.table} />
-            <p className="text-text mb-4 font-semibold">Related do(u)nuts</p>
-            <RelatedProducts related={product.related} />
-        </>
-    );
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export const Product = ({ product }: any) => {
+  const variants = product?.variants ?? [];
+
+  const [selected, setSelected] = useState(
+    variants?.[0] ?? {}
+  );
+
+  const [cart, setCart] = useState<any[]>([]);
+
+  const price = getDefaultPrice(
+    selected?.priceVariants ?? []
+  );
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("cart");
+
+      if (saved) {
+        setCart(JSON.parse(saved));
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "cart",
+        JSON.stringify(cart)
+      );
+    } catch {}
+  }, [cart]);
+
+  function addToCart() {
+    setCart((old) => [
+      ...old,
+      mapCartItem(selected),
+    ]);
+  }
+
+  return (
+    <div className="mt-10">
+
+      <h1 className="text-5xl font-bold mb-5">
+        {product?.name}
+      </h1>
+
+      <VariantSelector
+        variants={variants}
+        selectedVariant={selected}
+        onVariantChange={setSelected}
+      />
+
+      <div className="mt-10">
+        <p className="font-bold">
+          {formatPrice(
+            price?.currency,
+            price?.price
+          )}
+        </p>
+
+        <button
+          onClick={addToCart}
+          className="mt-4 px-5 py-3 rounded bg-black text-white"
+        >
+          Add to cart
+        </button>
+      </div>
+    </div>
+  );
 };

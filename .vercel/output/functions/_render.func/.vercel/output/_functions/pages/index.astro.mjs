@@ -3,7 +3,7 @@ import { O as createAstro, Q as createComponent, $ as renderComponent, a6 as ren
 import 'kleur/colors';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { Image, GridRenderer, GridRenderingType } from '@crystallize/reactjs-components';
-import { $ as $$Layout } from '../chunks/Layout_C7GbpmgE.mjs';
+import { $ as $$Layout } from '../chunks/Layout_DL_lBRAM.mjs';
 import { a as apiClient } from '../chunks/shared_vBvdt9Eh.mjs';
 export { renderers } from '../renderers.mjs';
 
