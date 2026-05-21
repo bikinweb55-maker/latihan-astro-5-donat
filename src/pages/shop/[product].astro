@@ -36,7 +36,8 @@ const productName = productData?.product?.name || "Product";
   <div class="lg:container mx-auto w-full lg:px-0 px-5">
     {
       productData?.product ? (
-        <CrystallizeProduct product={productData.product} client:load/>
+        /* Menggunakan client:only="react" agar react-dom-server tidak mengeksekusinya di Cloudflare saat build */
+        <CrystallizeProduct product={productData.product} client:only="react" />
       ) : (
         <p class="py-10 text-center">Product not found</p>
       )
