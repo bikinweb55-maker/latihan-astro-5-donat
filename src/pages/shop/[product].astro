@@ -8,24 +8,37 @@ import { Product as CrystallizeProduct } from "../../components/product";
 export const prerender = true;
 
 export async function getStaticPaths() {
-  const paths = await fetchAllProducts();
-  return paths.catalogue.children.map((child: { path: string }) => ({
-    params: { product: child.path.replace("/shop/", "") },
-  }));
+  try {
+    const paths = await fetchAllProducts();
+    if (!paths?.catalogue?.children) return [];
+    return paths.catalogue.children.map((child: { path: string }) => ({
+      params: { product: child.path.replace("/shop/", "") },
+    }));
+  } catch (e) {
+    return []; // Pengaman jika API Crystallize gagal dihubungi saat build
+  }
 }
 
 const { product } = Astro.params;
 
-const productData = await fetchProduct(`/shop/${product}`);
+let productData = null;
+try {
+  productData = await fetchProduct(`/shop/${product}`);
+} catch (e) {
+  productData = null;
+}
+
+// Amankan nama produk agar tidak eror jika data null
+const productName = productData?.product?.name || "Product";
 ---
 
-<Layout title={productData?.product?.name} description={productData?.prodcut?.name}>
+<Layout title={productName} description={productName}>
   <div class="lg:container mx-auto w-full lg:px-0 px-5">
     {
-      productData ? (
+      productData?.product ? (
         <CrystallizeProduct product={productData.product} client:load/>
       ) : (
-        <p>Product not found</p>
+        <p class="py-10 text-center">Product not found</p>
       )
     }
   </div>
